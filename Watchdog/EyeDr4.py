@@ -101,7 +101,7 @@ def EyeDr(name,image, height, width ,thresD = 7, thresC = 7):
     (s,t,n,i) = SNTI(eye,imgEye, x_c, y_c, x_d, y_d, w_c, h_c, w_d, h_d)
     
     print("Cup:  x:%f, y: %f, w:%f, h:%f "%(x_c/width + w_c/(width*2) , y_c/height + h_c/(height*2), w_c/width ,h_c/height))
-    print("Disc:  x:%f, y: %f, w:%f, h:%f "%(x_d/width + w_d/(width*2), y_d/height + h_c/(height*2) ,w_d/width ,h_d/height))
+    print("Disc:  x:%f, y: %f, w:%f, h:%f "%(x_d/width + w_d/(width*2), y_d/height + h_d/(height*2) ,w_d/width ,h_d/height))
    # WriteToCSV(count, name, s, n, t, i, x_c, y_c, w_c, h_c, x_d, y_d, w_d, h_d)
    
     return (imgEye,s, n, t, i, x_c/width + w_c/(width*2) , y_c/height + h_c/(height*2) , w_c/width, h_c/height,
