@@ -3,23 +3,37 @@ import EyeDr4
 import cv2
 import os
 import tracemalloc
+import string_split as js
 from watchdog.observers import Observer
 from watchdog.events import PatternMatchingEventHandler
 def on_created(event):
-    print(f"{event.src_path} has been created!")
-    img = cv2.imread(event.src_path)
-    result =  EyeDr4.EyeDr(img)
-    cv2.imwrite(os.path.join('Labeled_GLC/' , event.src_path), result)
+    name = event.src_path.split('\\')[1]
+    print(f"{name} has been created!")
+    img = cv2.imread(name)
+    height, width, channels = img.shape
+    result, s, n, t, i, x_c, y_c, w_c, h_c, x_d, y_d, w_d, h_d =  EyeDr4.EyeDr(name, img, height, width)
+    cv2.imwrite(os.path.join('Labeled_GLC/' , name), result)
+    exportJS(name, width, height, s, n, t, i, x_c, y_c, w_c, h_c, x_d, y_d, w_d, h_d)
+    
 def on_deleted(event):
     print(f"{event.src_path} deleted!")
 def on_modified(event):
     print(f"{event.src_path} has been modified")
 def on_moved(event):
     print(f"{event.src_path} moved to {event.dest_path}")
-
+def exportJS(name, width, height, s, n, t, i, x_c, y_c, w_c, h_c, x_d, y_d, w_d, h_d):
+    x_c = x_c + int(w_c/2)
+    y_c = y_c + int(h_c/2)
+    x_d = x_d + int(w_d/2)
+    y_d = y_d + int(h_d/2)
+    name, jstxt = js.stringsplit(name, (width,height), s, n, t, i,
+                   float("{:.6f}".format(x_c/width)), float("{:.6f}".format(y_c/height)), float("{:.6f}".format(w_c/width)),
+                    float("{:.6f}".format(h_c/height)), float("{:.6f}".format(x_d/width)), float("{:.6f}".format(y_d/height)),
+                    float("{:.6f}".format(w_d/width)), float("{:.6f}".format(h_d/height)))
+    js.exportJS(name, jstxt)
 if __name__ == "__main__":
     tracemalloc.start()
-    patterns = ["*"]
+    patterns = ["*.JPG","*.PNG"]
     ignore_patterns = None
     ignore_directories = False
     case_sensitive = True
@@ -29,7 +43,7 @@ if __name__ == "__main__":
     my_event_handler.on_modified = on_modified
     my_event_handler.on_moved = on_moved
     path = "."
-    go_recursively = True
+    go_recursively = False
     my_observer = Observer()
     my_observer.schedule(my_event_handler, path, recursive=go_recursively)
     my_observer.start()

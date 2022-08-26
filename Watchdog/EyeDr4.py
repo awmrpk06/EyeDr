@@ -5,10 +5,13 @@ import csv
 import pandas as pd
 import os
 import re
+import string_split as js
 csv_name = 'DATA_26062022.csv'
 w_process = 640
 h_process = 480
 index = 0
+aD = 166.14221331019428; bD = -1.8433900167479054; cD = 0.01009104294584857; dD = -2.7251091520976264e-05; eD = 2.9073925247676148e-08; fD = -5790.1772194276555
+aC = 121.72160706808744; bC = -1.4072184730873407; cC = 0.008008623073192875; dC = -2.23687581598597e-05; eC = 2.4568387357272637e-08; fC = -4020.175253867087
 def nothing(x):
     pass
 def numericalSort(value):
@@ -28,9 +31,18 @@ def ReadImg():
         print(images)
         img = cv2.imread(folder_dir + images)
         height, width, channels = img.shape
-        result =  EyeDr(img)
+        result =  EyeDr(name,img, height, width)
         cv2.imwrite(os.path.join('Labeled_GLC/' , images), result)
-def getContours (org_img,cThr=[50,100],minArea = 0,showCanny = False,draw = False):
+def removearray(L,arr):
+    ind = 0
+    size = len(L)
+    while ind != size and not np.array_equal(L[ind],arr):
+        ind += 1
+    if ind != size:
+        L.pop(ind)
+    else:
+        raise ValueError('array not found in list.')
+def getContours (org_img,cThr=[50,100],minArea = 0, filter = 4,showCanny = False,draw = False):
     img = org_img.copy()
    # imgGray = cv2.cvtColor(img,cv2.COLOR_BGR2GRAY)
     #imgBlur = cv2.GaussianBlur(imgGray,(5,5),1)
@@ -74,27 +86,23 @@ def FindBrightestP(image, thres):
     # cv2.imshow("grayscale",bright)
     print("Brightest point: ", maxVal)
     return gray, maxVal
-def EyeDr(image, thresD = 7, thresC = 7):
+def EyeDr(name,image, height, width ,thresD = 7, thresC = 7):
     imgEye = image.copy()
-    #Change size for process
- #   imgEye_process = cv2.resize(imgEye,(w_process, h_process),None,0.5,0.5)
-    #Process
     mask_img, maxVal = FindBrightestP(imgEye, thresD)
     #cv2.imshow("Mask: ",mask_img)
-    vCup = 167
-    vDisc = 130
-    if maxVal >= 213 :
-        vCup = 180
-        vDisc = 136
+    vCup = int(objective(maxVal, aC, bC, cC, dC, eC, fC))
+    vDisc = int(objective(maxVal, aD, bD, cD, dD, eD, fD))
     print("vCup :%d, vDisc :%d"%(vCup, vDisc))
     (x_c, y_c, w_c, h_c) = Filter(mask_img ,thresC, vCup, maxVal)
     (x_d, y_d, w_d, h_d) = Filter(mask_img ,thresD, vDisc, maxVal)
-    print(" x:%d, y: %d, w:%d, h:%d "%(x_c,y_c,w_c,h_c))
-    print(" x:%d, y: %d, w:%d, h:%d "%(x_d,y_d,w_d,h_d))
-
-    (s,t,n,i) = SNTI(imgEye, x_c, y_c, x_d, y_d, w_c, h_c, w_d, h_d)
-   # WriteToCSV(count, name, s, n, t, i, x_c, y_c, w_c, h_c, x_d, y_d, w_d, h_d, thresC, thresD)
-    return imgEye
+    print(" x:%f, y: %f, w:%f, h:%f "%(x_c/width, y_c/height, w_c/width ,h_c/height))
+    print(" x:%f, y: %f, w:%f, h:%f "%(x_d/width, y_d/height ,w_d/width ,h_d/height))
+    print("width: %d, height: %d"%(width,height))
+    eye = js.getEye(name)
+    (s,t,n,i) = SNTI(eye,imgEye, x_c, y_c, x_d, y_d, w_c, h_c, w_d, h_d)
+    
+   # WriteToCSV(count, name, s, n, t, i, x_c, y_c, w_c, h_c, x_d, y_d, w_d, h_d)
+    return imgEye,s, n, t, i, x_c, y_c, w_c, h_c, x_d, y_d, w_d, h_d
 def returnToOrginalSize(x_c, y_c, x_d, y_d, w_c, h_c, w_d, h_d, height, width):
     x_c = int(float(x_c/w_process)*width)
     y_c = int(float(y_c/h_process)*height)
@@ -106,24 +114,30 @@ def returnToOrginalSize(x_c, y_c, x_d, y_d, w_c, h_c, w_d, h_d, height, width):
     w_d = int(float(w_d/w_process)*width)
     h_d = int(float(h_d/h_process)*height)
     return x_c, y_c, x_d, y_d, w_c, h_c, w_d, h_d
-def SNTI(img ,x_c,y_c ,x_d, y_d, w_c, h_c, w_d, h_d):
+def SNTI(eye ,img ,x_c,y_c ,x_d, y_d, w_c, h_c, w_d, h_d):
     s = y_c - y_d 
     t = x_c - x_d
     n = x_d + w_d - x_c - w_c 
     i = y_d + h_d - y_c - h_c
-    
     cv2.line(img, (x_d + int(w_d/2), y_d), (x_d + int(w_d/2), y_c), (255,0,0), 3)
     cv2.line(img, (x_d, y_d + int(h_d/2)), (x_c, y_d + int(h_d/2)), (255,0,0), 3)
     cv2.line(img, (x_c + w_c, y_d + int(h_d/2)), (x_d + w_d, y_d + int(h_d/2)), (255,0,0), 3)
     cv2.line(img, (x_d + int(w_d/2), y_d + h_d), (x_d + int(w_d/2), y_c + h_c), (255,0,0), 3)
-    
-    cv2.putText(img, "S", ( x_d + int(w_d/2), y_d - int(h_d/6) ), cv2.FONT_HERSHEY_TRIPLEX, 2, (255,0,0), 3)
-    cv2.putText(img, "T", ( x_d - int(w_d/4), y_d + int(h_d/2) ), cv2.FONT_HERSHEY_TRIPLEX, 2, (255,0,0), 3)
-    cv2.putText(img, "N", ( x_c + int(w_c*1.25),  y_d + int(h_d/2) ), cv2.FONT_HERSHEY_TRIPLEX, 2, (255,0,0), 3)
     cv2.putText(img, "I", ( x_d + int(w_d/2), y_d + int(h_d*1.5) ), cv2.FONT_HERSHEY_TRIPLEX, 2, (255,0,0), 3)
-    
+    cv2.putText(img, "S", ( x_d + int(w_d/2), y_d - int(h_d/6) ), cv2.FONT_HERSHEY_TRIPLEX, 2, (255,0,0), 3)
+    if eye == "L":
+        n, t = t, n
+        cv2.putText(img, "N", ( x_d - int(w_d/3), y_d + int(h_d/2) ), cv2.FONT_HERSHEY_TRIPLEX, 2, (255,0,0), 3)
+        cv2.putText(img, "T", ( x_c + int(w_c*1.25),  y_d + int(h_d/2) ), cv2.FONT_HERSHEY_TRIPLEX, 2, (255,0,0), 3)
+    else:
+        cv2.putText(img, "T", ( x_d - int(w_d/4), y_d + int(h_d/2) ), cv2.FONT_HERSHEY_TRIPLEX, 2, (255,0,0), 3)
+        cv2.putText(img, "N", ( x_c + int(w_c*1.25),  y_d + int(h_d/2) ), cv2.FONT_HERSHEY_TRIPLEX, 2, (255,0,0), 3) 
     cv2.rectangle(img, (x_d, y_d), (x_d + w_d, y_d + h_d), (255, 255, 255), 3)
     cv2.rectangle(img, (x_c, y_c), (x_c + w_c, y_c + h_c), (0, 255, 0), 3)
     print("s = %d, t = %d, n = %d, i = %d" %(s,t,n,i))
     return s,t,n,i
+def objective(x, a, b, c, d, e, f):
+	return (a * x) + (b * x**2) + (c * x**3) + (d * x**4) + (e * x**5) + f
+
+    
 #ReadImg()
