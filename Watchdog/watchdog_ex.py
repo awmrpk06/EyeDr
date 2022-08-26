@@ -27,9 +27,9 @@ def exportJS(name, width, height, s, n, t, i, x_c, y_c, w_c, h_c, x_d, y_d, w_d,
     x_d = x_d + int(w_d/2)
     y_d = y_d + int(h_d/2)
     name, jstxt = js.stringsplit(name, (width,height), s, n, t, i,
-                   float("{:.6f}".format(x_c/width)), float("{:.6f}".format(y_c/height)), float("{:.6f}".format(w_c/width)),
-                    float("{:.6f}".format(h_c/height)), float("{:.6f}".format(x_d/width)), float("{:.6f}".format(y_d/height)),
-                    float("{:.6f}".format(w_d/width)), float("{:.6f}".format(h_d/height)))
+                   float("{:.6f}".format(x_c)), float("{:.6f}".format(y_c)), float("{:.6f}".format(w_c)),
+                    float("{:.6f}".format(h_c)), float("{:.6f}".format(x_d)), float("{:.6f}".format(y_d)),
+                    float("{:.6f}".format(w_d)), float("{:.6f}".format(h_d)))
     js.exportJS(name, jstxt)
 if __name__ == "__main__":
     tracemalloc.start()

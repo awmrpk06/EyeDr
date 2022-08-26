@@ -95,14 +95,17 @@ def EyeDr(name,image, height, width ,thresD = 7, thresC = 7):
     print("vCup :%d, vDisc :%d"%(vCup, vDisc))
     (x_c, y_c, w_c, h_c) = Filter(mask_img ,thresC, vCup, maxVal)
     (x_d, y_d, w_d, h_d) = Filter(mask_img ,thresD, vDisc, maxVal)
-    print(" x:%f, y: %f, w:%f, h:%f "%(x_c/width, y_c/height, w_c/width ,h_c/height))
-    print(" x:%f, y: %f, w:%f, h:%f "%(x_d/width, y_d/height ,w_d/width ,h_d/height))
+
     print("width: %d, height: %d"%(width,height))
     eye = js.getEye(name)
     (s,t,n,i) = SNTI(eye,imgEye, x_c, y_c, x_d, y_d, w_c, h_c, w_d, h_d)
     
+    print("Cup:  x:%f, y: %f, w:%f, h:%f "%(x_c/width + w_c/(width*2) , y_c/height + h_c/(height*2), w_c/width ,h_c/height))
+    print("Disc:  x:%f, y: %f, w:%f, h:%f "%(x_d/width + w_d/(width*2), y_d/height + h_c/(height*2) ,w_d/width ,h_d/height))
    # WriteToCSV(count, name, s, n, t, i, x_c, y_c, w_c, h_c, x_d, y_d, w_d, h_d)
-    return imgEye,s, n, t, i, x_c, y_c, w_c, h_c, x_d, y_d, w_d, h_d
+   
+    return (imgEye,s, n, t, i, x_c/width + w_c/(width*2) , y_c/height + h_c/(height*2) , w_c/width, h_c/height,
+            x_d/width + w_d/(width*2), y_d/height + h_c/(height*2), w_d/width, h_d/height)
 def returnToOrginalSize(x_c, y_c, x_d, y_d, w_c, h_c, w_d, h_d, height, width):
     x_c = int(float(x_c/w_process)*width)
     y_c = int(float(y_c/h_process)*height)
