@@ -22,8 +22,9 @@ def stringsplit(text, res ,s, n, t, i, xC, yC, wC, hC, xD, yD, wD, hD):
         "wD" : wD,
         "Resolution" : res
         }
+    js = json.dumps(js)
     print(js)
-    return name[0], js
+    return text, js
 def exportJS(name, data):
     with open(name +'.json', 'w', encoding='utf-8') as f:
         json.dump(data, f, ensure_ascii=False, indent=4)
